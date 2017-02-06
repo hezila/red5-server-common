@@ -1,14 +1,14 @@
 /*
  * RED5 Open Source Media Server - https://github.com/Red5/
- * 
+ *
  * Copyright 2006-2016 by respective authors (see below). All rights reserved.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -154,9 +154,9 @@ public class StreamService implements IStreamService {
      * Close stream. This method can close both IClientBroadcastStream (coming from Flash Player to Red5) and ISubscriberStream (from Red5
      * to Flash Player). Corresponding application handlers (streamSubscriberClose, etc.) are called as if close was initiated by Flash
      * Player.
-     * 
+     *
      * It is recommended to remember stream id in application handlers, ex.:
-     * 
+     *
      * <pre>
      * public void streamBroadcastStart(IBroadcastStream stream) {
      *     super.streamBroadcastStart(stream);
@@ -166,17 +166,17 @@ public class StreamService implements IStreamService {
      *     }
      * }
      * </pre>
-     * 
+     *
      * <pre>
      * public void streamPlaylistItemPlay(IPlaylistSubscriberStream stream, IPlayItem item, boolean isLive) {
      *     super.streamPlaylistItemPlay(stream, item, isLive);
      *     Red5.getConnectionLocal().setAttribute(WATCHED_STREAM_ID_ATTRIBUTE, stream.getStreamId());
      * }
      * </pre>
-     * 
+     *
      * When stream is closed, corresponding NetStream status will be sent to stream provider / consumers. Implementation is based on Red5's
      * StreamService.close()
-     * 
+     *
      * @param conn
      *            client connection
      * @param streamId
@@ -248,7 +248,7 @@ public class StreamService implements IStreamService {
 
     /**
      * Pause at given position. Required as "pausePlayback" can be "null" if no flag is passed by the client
-     * 
+     *
      * @param pausePlayback
      *            Pause playback or not
      * @param position
@@ -277,7 +277,7 @@ public class StreamService implements IStreamService {
 
     /**
      * Plays back a stream based on the supplied name, from the specified position for the given length of time.
-     * 
+     *
      * @param name
      *            - The name of a recorded file, or the identifier for live data. If
      * @param start
@@ -447,7 +447,7 @@ public class StreamService implements IStreamService {
 
     /**
      * Dynamic streaming play method. This is a convenience method.
-     * 
+     *
      * @param oldStreamName
      *            old
      * @param start
@@ -473,7 +473,7 @@ public class StreamService implements IStreamService {
 
     /**
      * Dynamic streaming play method. This is a convenience method.
-     * 
+     *
      * @param params
      *            play parameters
      */
@@ -491,15 +491,15 @@ public class StreamService implements IStreamService {
 
     /**
      * Dynamic streaming play method.
-     * 
+     *
      * The following properties are supported on the play options:
-     * 
+     *
      * <pre>
      * streamName: String. The name of the stream to play or the new stream to switch to.
-     * oldStreamName: String. The name of the initial stream that needs to be switched out. This is not needed and ignored 
+     * oldStreamName: String. The name of the initial stream that needs to be switched out. This is not needed and ignored
      *                 when play2 is used for just playing the stream and not switching to a new stream.
-     * start: Number. The start time of the new stream to play, just as supported by the existing play API. and it has the 
-     *                same defaults. This is ignored when the method is called for switching (in other words, the transition 
+     * start: Number. The start time of the new stream to play, just as supported by the existing play API. and it has the
+     *                same defaults. This is ignored when the method is called for switching (in other words, the transition
      *                is either NetStreamPlayTransition.SWITCH or NetStreamPlayTransitions.SWAP)
      * len: Number. The duration of the playback, just as supported by the existing play API and has the same defaults.
      * transition: String. The transition mode for the playback command. It could be one of the following:
@@ -508,7 +508,7 @@ public class StreamService implements IStreamService {
      *      NetStreamPlayTransitions.SWITCH
      *      NetStreamPlayTransitions.SWAP
      * </pre>
-     * 
+     *
      * NetStreamPlayTransitions:
      * <pre>
      *      APPEND : String = "append" - Adds the stream to a playlist and begins playback with the first stream.
@@ -519,7 +519,7 @@ public class StreamService implements IStreamService {
      *      SWAP : String = "swap" - Replaces a content stream with a different content stream and maintains the rest of the playlist.
      *      SWITCH : String = "switch" - Switches from playing one stream to another stream, typically with streams of the same content.
      * </pre>
-     * 
+     *
      * @see <a href="http://www.adobe.com/devnet/flashmediaserver/articles/dynstream_actionscript.html">ActionScript guide to dynamic
      *      streaming</a>
      * @see <a href="http://www.adobe.com/devnet/flashmediaserver/articles/dynstream_advanced_pt1.html">Dynamic streaming in Flash Media
@@ -531,7 +531,7 @@ public class StreamService implements IStreamService {
      */
     public void play2(Map<String, ?> playOptions) {
         log.debug("play2 options: {}", playOptions.toString());
-        /* { streamName=streams/new.flv, oldStreamName=streams/old.flv, 
+        /* { streamName=streams/new.flv, oldStreamName=streams/old.flv,
         	start=0, len=-1, offset=12.195, transition=switch } */
         // get the transition type
         String transition = (String) playOptions.get("transition");
@@ -667,7 +667,13 @@ public class StreamService implements IStreamService {
             }
             IBroadcastScope bsScope = getBroadcastScope(scope, name);
             if (bsScope != null && !bsScope.getProviders().isEmpty()) {
-                // another stream with that name is already published			
+                // another stream already published should be removed
+                deleteStream(bsScope.getClientBroadcastStream().getConnection(), bsScope.getClientBroadcastStream().getStreamId());
+                log.error("Bad name {} is removed.", name);
+            }
+            bsScope = getBroadcastScope(scope, name);
+            if (bsScope != null && !bsScope.getProviders().isEmpty()) {
+                // another stream with that name is already published
                 sendNSFailed(streamConn, StatusCodes.NS_PUBLISH_BADNAME, name, name, streamId);
                 log.error("Bad name {}", name);
                 return;
@@ -778,7 +784,7 @@ public class StreamService implements IStreamService {
 
     /**
      * Return broadcast scope object for given scope and child scope name.
-     * 
+     *
      * @param scope
      *            Scope object
      * @param name
@@ -791,7 +797,7 @@ public class StreamService implements IStreamService {
 
     /**
      * Send NetStream.Play.Failed to the client.
-     * 
+     *
      * @param conn
      * @param errorCode
      * @param description
@@ -804,7 +810,7 @@ public class StreamService implements IStreamService {
 
     /**
      * Send NetStream.Status to the client.
-     * 
+     *
      * @param conn
      * @param statusCode
      *            see StatusCodes class
@@ -818,7 +824,7 @@ public class StreamService implements IStreamService {
 
     /**
      * Send NetStream.Status to the client.
-     * 
+     *
      * @param conn
      *            connection
      * @param statusCode
