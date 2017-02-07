@@ -432,7 +432,7 @@ public class StreamService implements IStreamService {
     /** {@inheritDoc} */
     public void play(Boolean dontStop) {
         log.debug("Play without stop: {}", dontStop);
-        if (!dontStop) {
+        if (dontStop == null || !dontStop) {
             IConnection conn = Red5.getConnectionLocal();
             if (conn instanceof IStreamCapableConnection) {
                 IStreamCapableConnection streamConn = (IStreamCapableConnection) conn;
