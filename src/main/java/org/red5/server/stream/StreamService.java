@@ -676,7 +676,7 @@ public class StreamService implements IStreamService {
             if (bsScope != null && !bsScope.getProviders().isEmpty()) {
                 // another stream with that name is already published
                 sendNSFailed(streamConn, StatusCodes.NS_PUBLISH_BADNAME, name, name, streamId);
-                log.error("Bad name {}", name);
+                log.error("Bad name {}, this problem still exist!!!", name);
                 return;
             }
             IClientStream stream = streamConn.getStreamById(streamId);
